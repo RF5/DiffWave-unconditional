@@ -16,6 +16,7 @@ from distributed_util import init_distributed, apply_gradient_allreduce, reduce_
 # from WaveNet import WaveNet_Speech_Commands as WaveNet
 from sashimi.model import SashimiDiffWave
 from sashimi.config import DiffusionConfig
+from omegaconf import OmegaConf
 
 def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
           ckpt_iter, n_iters, iters_per_ckpt, iters_per_logging,
@@ -70,7 +71,7 @@ def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
     
     # predefine model
     # net = WaveNet(**wavenet_config).cuda()
-    net = SashimiDiffWave(DiffusionConfig()).cuda()
+    net = SashimiDiffWave(OmegaConf.create(DiffusionConfig)).cuda()
     print_size(net)
 
     # apply gradient all reduce
@@ -131,13 +132,15 @@ def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
 
             # save checkpoint
             if n_iter > 0 and n_iter % iters_per_ckpt == 0 and rank == 0:
-                checkpoint_name = '{}.pkl'.format(n_iter)
+                checkpoint_name = '{}.pt'.format(n_iter)
                 torch.save({'model_state_dict': net.state_dict(),
-                            'optimizer_state_dict': optimizer.state_dict()}, 
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'steps': n_iter,
+                            'lr': float(optimizer.param_groups[0]['lr'])}, 
                            os.path.join(output_directory, checkpoint_name))
                 print('model at iteration %s is saved' % n_iter)
 
-            if n_iter == 50:
+            if n_iter == 500000:
                 # magical decay that Sashimi paper claims they introduce at 500k
                 pre_lr = optimizer.param_groups[0]['lr']
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr']*DiffusionConfig.decay_factor_at_500k

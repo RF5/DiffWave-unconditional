@@ -62,7 +62,8 @@ class DiffusionConfig:
     diffwave: bool = True
     dropout: float = 0.0
     # optimization settings
-    batch_size: int = 8 #16 # good luck trying to get a 16 batch size without at least 2 80GB A100s :(
+    # batch_size: int = 8 #16 # good luck trying to get a 16 batch size without at least 2 80GB A100s :(
+    # with 3 GPUs, each with bs=4, we get a total batch size of 12.
     learning_rate: float = 2e-4
     max_grad_norm: Union[int, None] = None
     # diffusion settings

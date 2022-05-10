@@ -54,7 +54,7 @@ class SPEECHCOMMANDS(Dataset):
         # self._walker = list(walker)
 
     def __getitem__(self, n: int) -> Tuple[Tensor, int, str, str, int]:
-        row = self.df.iloc[row]
+        row = self.df.iloc[n]
         return load_speechcommands_item(row)
 
     def __len__(self) -> int: return len(self.df)
