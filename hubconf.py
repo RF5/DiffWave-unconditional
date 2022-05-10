@@ -80,7 +80,7 @@ def diffwave_sc09(pretrained=True, progress=True, device='cuda'):
         )
         model.load_state_dict(checkpoint['model_state_dict'])
 
-    model = DiffWaveWrapper(model, cfg)
+    model = DiffWaveWrapper(model, config)
     model = model.eval().to(device)
 
     print(f"[MODEL] DiffWave has {sum([p.numel() for p in model.parameters()]):,d} parameters")
