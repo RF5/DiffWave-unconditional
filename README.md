@@ -13,3 +13,17 @@ This is a reimplementaion of the unconditional waveform synthesizer in [DIFFWAVE
 ## Pretrained models and generated samples:
 - [model](https://github.com/philsyn/DiffWave-unconditional/tree/master/exp/ch256_T200_betaT0.02/logs/checkpoint)
 - [samples](https://github.com/philsyn/DiffWave-unconditional/tree/master/exp/ch256_T200_betaT0.02/speeches)
+
+## Torchhub integration
+
+This fork has been adapted from the original repo to provide torchhub integration for unconditional synthesis on the original model. 
+To use the model for inference, simply:
+
+```python
+model = torch.hub.load('RF5/DiffWave-unconditional', 'diffwave_sc09', device='cuda') # or device='cpu' if no cuda
+
+audio = model.unconditional_generate(N=3) # number of samples you want to generate
+# audio is now (N, 16000) 1s audio clips. You can save it as a wav or do whatever
+# you like with it!
+```
+

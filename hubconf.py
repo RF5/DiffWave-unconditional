@@ -56,7 +56,7 @@ class DiffWaveWrapper(nn.Module):
             x = (x - (1-Alpha[t])/torch.sqrt(1-Alpha_bar[t]) * epsilon_theta) / torch.sqrt(Alpha[t])  # update x_{t-1} to \mu_\theta(x_t)
             if t > 0:
                 x = x + Sigma[t] * torch.normal(0, 1, size).to(device)  # add the variance term to x_{t-1}
-        return x
+        return x.squeeze(1)
 
 
 def diffwave_sc09(pretrained=True, progress=True, device='cuda'):
