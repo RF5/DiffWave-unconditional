@@ -13,14 +13,15 @@ from util import training_loss, calc_diffusion_hyperparams
 
 from distributed_util import init_distributed, apply_gradient_allreduce, reduce_tensor
 
-from WaveNet import WaveNet_Speech_Commands as WaveNet
-
+# from WaveNet import WaveNet_Speech_Commands as WaveNet
+from sashimi.model import SashimiDiffWave
+from sashimi.config import DiffusionConfig
 
 def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
           ckpt_iter, n_iters, iters_per_ckpt, iters_per_logging,
           learning_rate, batch_size_per_gpu):
     """
-    Train the WaveNet model on the Speech Commands dataset
+    Train the Sashimi model on the Speech Commands dataset
 
     Parameters:
     num_gpus, rank, group_name:     parameters for distributed training
@@ -37,7 +38,7 @@ def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
     """
 
     # generate experiment (local) path
-    local_path = "ch{}_T{}_betaT{}".format(wavenet_config["res_channels"], 
+    local_path = "sashimi_ch{}_T{}_betaT{}".format(wavenet_config["res_channels"], 
                                            diffusion_config["T"], 
                                            diffusion_config["beta_T"])
     # Create tensorboard logger.
@@ -68,7 +69,8 @@ def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
     print('Data loaded')
     
     # predefine model
-    net = WaveNet(**wavenet_config).cuda()
+    # net = WaveNet(**wavenet_config).cuda()
+    net = SashimiDiffWave(DiffusionConfig()).cuda()
     print_size(net)
 
     # apply gradient all reduce
@@ -134,7 +136,13 @@ def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
                             'optimizer_state_dict': optimizer.state_dict()}, 
                            os.path.join(output_directory, checkpoint_name))
                 print('model at iteration %s is saved' % n_iter)
-            
+
+            if n_iter == 50:
+                # magical decay that Sashimi paper claims they introduce at 500k
+                pre_lr = optimizer.param_groups[0]['lr']
+                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr']*DiffusionConfig.decay_factor_at_500k
+                print(f"Decayed lr from {pre_lr} to {optimizer.param_groups[0]['lr']} at {n_iter}")
+                
             n_iter += 1
 
     # Close TensorBoard.
