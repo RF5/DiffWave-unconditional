@@ -1,13 +1,17 @@
-dependencies = ['torch', 'torchaudio', 'einops', 'opt_einsum', 'fastprogress', 'omegaconf']
+dependencies = ['torch', 'torchaudio', 'fastprogress', 'numpy']
+
+import json
+import urllib.request
+from pathlib import Path
 
 import torch
 import torch.nn as nn
-from torch import Tensor
-from pathlib import Path
-from WaveNet import WaveNet_Speech_Commands
-from util import calc_diffusion_hyperparams
 from fastprogress.fastprogress import progress_bar
-import json
+from torch import Tensor
+
+from util import calc_diffusion_hyperparams
+from WaveNet import WaveNet_Speech_Commands
+
 
 class DiffWaveWrapper(nn.Module):
 
@@ -57,10 +61,9 @@ class DiffWaveWrapper(nn.Module):
 
 def diffwave_sc09(pretrained=True, progress=True, device='cuda'):
     """ DiffWave with WaveNet backbone: diffusion model trained on SC09 dataset. """
+    with urllib.request.urlopen("https://github.com/RF5/DiffWave-unconditional/releases/download/v0.1/config.json") as url:
+        config = json.loads(url.read().decode())
 
-    with open('config.json') as f:
-        data = f.read()
-    config = json.loads(data)
     gen_config              = config["gen_config"]
     wavenet_config          = config["wavenet_config"]      # to define wavenet
     diffusion_config        = config["diffusion_config"]    # basic hyperparameters
@@ -72,7 +75,7 @@ def diffwave_sc09(pretrained=True, progress=True, device='cuda'):
     if pretrained:
         # load checkpoint
         checkpoint = torch.hub.load_state_dict_from_url(
-            "https://github.com/RF5/DiffWave-unconditional/blob/master/exp/ch256_T200_betaT0.02/logs/checkpoint/1000000.pkl",
+            "https://github.com/RF5/DiffWave-unconditional/releases/download/v0.1/diffwave_sc09_1M_steps.pt",
             progress=progress, map_location=device
         )
         model.load_state_dict(checkpoint['model_state_dict'])
