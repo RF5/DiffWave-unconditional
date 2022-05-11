@@ -15,7 +15,7 @@ from WaveNet import WaveNet_Speech_Commands
 
 class DiffWaveWrapper(nn.Module):
     
-    supports_nll: bool = True
+    supports_nll: bool = False
 
     def __init__(self, diffwave: WaveNet_Speech_Commands, cfg: dict) -> None:
         super().__init__()
