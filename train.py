@@ -87,7 +87,7 @@ def train(num_gpus, rank, group_name, output_directory, tensorboard_directory,
     if ckpt_iter >= 0:
         try:
             # load checkpoint file
-            model_path = os.path.join(output_directory, '{}.pkl'.format(ckpt_iter))
+            model_path = os.path.join(output_directory, '{}.pt'.format(ckpt_iter))
             checkpoint = torch.load(model_path, map_location='cpu')
             
             # feed model dict and optimizer state

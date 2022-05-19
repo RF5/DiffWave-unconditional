@@ -19,6 +19,7 @@ class DiffWaveWrapper(nn.Module):
         super().__init__()
         self.diffwave = diffwave
         self.cfg = cfg
+        self.z_dim = 16000 # z-dim is same as sequence length for diffusion model
         # dictionary of all diffusion hyperparameters
         self.diffusion_hyperparams   = calc_diffusion_hyperparams(**cfg["diffusion_config"])
 
@@ -48,6 +49,31 @@ class DiffWaveWrapper(nn.Module):
         device = next(self.diffwave.parameters()).device
 
         x = torch.normal(0, 1, size=size).to(device)
+        if progress: pb = progress_bar(range(T-1, -1, -1), parent=mb)
+        else: pb = range(T-1, -1, -1)
+        for t in pb:
+            diffusion_steps = (t * torch.ones((size[0], 1))).to(device)  # use the corresponding reverse step
+            epsilon_theta = self.diffwave((x, diffusion_steps,))  # predict \epsilon according to \epsilon_\theta
+            x = (x - (1-Alpha[t])/torch.sqrt(1-Alpha_bar[t]) * epsilon_theta) / torch.sqrt(Alpha[t])  # update x_{t-1} to \mu_\theta(x_t)
+            if t > 0:
+                x = x + Sigma[t] * torch.normal(0, 1, size).to(device)  # add the variance term to x_{t-1}
+        return x.squeeze(1)
+
+    @torch.inference_mode()
+    def generate_from_latent(self, z: Tensor, progress=True, mb=None) -> Tensor:
+        """ Generate waveforms (N, 16000) from latent standard normal `z` (N, z_dim) """
+        N = z.shape[0]
+        size = (N, 1, self.cfg['trainset_config']['segment_length'])
+        _dh = self.diffusion_hyperparams
+        T, Alpha, Alpha_bar, Sigma = _dh["T"], _dh["Alpha"], _dh["Alpha_bar"], _dh["Sigma"]
+        assert len(Alpha) == T
+        assert len(Alpha_bar) == T
+        assert len(Sigma) == T
+        assert len(size) == 3
+        assert size[-1] == 16000
+        device = next(self.diffwave.parameters()).device
+
+        x = z[:, None].to(device) # (N, 1, 16000)
         if progress: pb = progress_bar(range(T-1, -1, -1), parent=mb)
         else: pb = range(T-1, -1, -1)
         for t in pb:
