@@ -27,3 +27,13 @@ audio = model.unconditional_generate(N=3) # number of samples you want to genera
 # you like with it!
 ```
 
+Other models available are `"sashimi_diffwave_500k_sc09"`, which handles in exactly the same way and is the DiffWave model using the [SaShiMi](https://arxiv.org/abs/2202.09729) backbone adapted from the [original authors repo](https://github.com/HazyResearch/state-spaces/tree/main/sashimi).
+
+### SaShiMi DiffWave
+I provide pretrained SaShiMi DiffWave models by adapting the [code provided by the authors](https://github.com/HazyResearch/state-spaces/tree/main/sashimi).
+The original code appears to be very unstable unless it is used on a CUDA GPU with their custom CUDA kernel which a particular block in their model uses. 
+I provide a copy of the CUDA kernel in the `extensions` folder -- this is duplicated from the [CUDA kernel in the original repo](https://github.com/HazyResearch/state-spaces/tree/main/extensions/cauchy) -- all credit to the original authors for providing it.
+
+To install the CUDA kernel to use with SaShiMi, `cd` into the `extensions/cauchy` and install the module with `python setup.py install`. 
+
+**NOTE**: To do this make sure you hae a gcc version newer than 4.9 but less than 9.0, otherwise nvcc or torch throws a fit. Without this, the S4 layer appears to use an exorbitant amount of memory for the number of parameters used. The official implementation of the S4 layer taken from the original repo even appears to slightly leak memory when not using these additional kernel or pykeops dependencies, so if you are training this model, I highly recommend installing the CUDA kernel.

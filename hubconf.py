@@ -123,6 +123,8 @@ def sashimi_diffwave_800k_sc09(pretrained=True, progress=True, device='cuda'):
     
 def sashimi_diffwave_500k_sc09(pretrained=True, progress=True, device='cuda'):
     """ DiffWave with Sashimi backbone: diffusion model trained on SC09 dataset. """
+    if 'cuda' not in str(device):
+        raise NotImplementedError("SaShiMi is seemingly only accurately implement on CUDA GPUs with their custom CUDA kernel.")
     with urllib.request.urlopen("https://github.com/RF5/DiffWave-unconditional/releases/download/v0.1/config.json") as url:
         config = json.loads(url.read().decode())
 

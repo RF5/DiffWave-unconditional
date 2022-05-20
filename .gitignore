@@ -6,7 +6,6 @@ __pycache__/
 */__pycache__/
 *.zip
 */*.zip
-extensions/
 splits/
 **/.ipynb_checkpoints/
 exp/*
