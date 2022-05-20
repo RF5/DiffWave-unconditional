@@ -1,4 +1,4 @@
-dependencies = ['torch', 'torchaudio', 'fastprogress', 'numpy']
+dependencies = ['torch', 'torchaudio', 'fastprogress', 'numpy', 'omegaconf']
 
 import json
 import urllib.request
@@ -11,6 +11,9 @@ from torch import Tensor
 
 from util import calc_diffusion_hyperparams
 from WaveNet import WaveNet_Speech_Commands
+from sashimi.model import SashimiDiffWave
+from sashimi.config import DiffusionConfig
+from omegaconf import OmegaConf
 
 
 class DiffWaveWrapper(nn.Module):
@@ -109,8 +112,37 @@ def diffwave_sc09(pretrained=True, progress=True, device='cuda'):
     model = DiffWaveWrapper(model, config)
     model = model.eval().to(device)
 
-    print(f"[MODEL] DiffWave has {sum([p.numel() for p in model.parameters()]):,d} parameters")
+    print(f"[MODEL] DiffWave loaded with {sum([p.numel() for p in model.parameters()]):,d} parameters")
     return model
 
     
+def sashimi_diffwave_sc09(pretrained=True, progress=True, device='cuda', steps='last'):
+    """ DiffWave with Sashimi backbone: diffusion model trained on SC09 dataset. """
+    with urllib.request.urlopen("https://github.com/RF5/DiffWave-unconditional/releases/download/v0.1/config.json") as url:
+        config = json.loads(url.read().decode())
+
+    gen_config              = config["gen_config"]
+    wavenet_config          = config["wavenet_config"]      # to define wavenet
+    diffusion_config        = config["diffusion_config"]    # basic hyperparameters
+    trainset_config         = config["trainset_config"]     # to read trainset configurations
+
+    # predefine model
+    model = SashimiDiffWave(OmegaConf.create(DiffusionConfig)).to(device)
     
+    if pretrained:
+        if steps not in ['last', '500k', '800k']: raise NotImplementedError("Only steps='last', '500k', or '800k' available.")
+
+        if steps == '500k':
+            # load checkpoint
+            checkpoint = torch.hub.load_state_dict_from_url(
+                "https://github.com/RF5/DiffWave-unconditional/releases/download/v0.2/sashimi_sc09_500k_steps.pt",
+                progress=progress, map_location=device
+            )
+        else: raise NotImplementedError()
+
+        model.load_state_dict(checkpoint['model_state_dict'])
+
+    model = DiffWaveWrapper(model, config)
+    model = model.eval().to(device)
+    print(f"[MODEL] SaShiMi DiffWave loaded with {sum([p.numel() for p in model.parameters()]):,d} parameters")
+    return model
