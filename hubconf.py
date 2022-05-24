@@ -191,11 +191,6 @@ def sashimi_diffwave_500k_sc09(pretrained=True, progress=True, device='cuda'):
     with urllib.request.urlopen("https://github.com/RF5/DiffWave-unconditional/releases/download/v0.1/config.json") as url:
         config = json.loads(url.read().decode())
 
-    gen_config              = config["gen_config"]
-    wavenet_config          = config["wavenet_config"]      # to define wavenet
-    diffusion_config        = config["diffusion_config"]    # basic hyperparameters
-    trainset_config         = config["trainset_config"]     # to read trainset configurations
-
     # predefine model
     model = SashimiDiffWave(OmegaConf.create(DiffusionConfig)).to(device)
     
@@ -211,4 +206,29 @@ def sashimi_diffwave_500k_sc09(pretrained=True, progress=True, device='cuda'):
     model = DiffWaveWrapper(model, config)
     model = model.eval().to(device)
     print(f"[MODEL] SaShiMi DiffWave [500k] loaded with {sum([p.numel() for p in model.parameters()]):,d} parameters")
+    return model
+
+
+def sashimi_diffwave_800k_sc09(pretrained=True, progress=True, device='cuda'):
+    """ DiffWave with Sashimi backbone: diffusion model trained on SC09 dataset. """
+    if 'cuda' not in str(device):
+        raise NotImplementedError("SaShiMi is seemingly only accurately implement on CUDA GPUs with their custom CUDA kernel.")
+    with urllib.request.urlopen("https://github.com/RF5/DiffWave-unconditional/releases/download/v0.1/config.json") as url:
+        config = json.loads(url.read().decode())
+
+    # predefine model
+    model = SashimiDiffWave(OmegaConf.create(DiffusionConfig)).to(device)
+    
+    if pretrained:
+        # load checkpoint
+        checkpoint = torch.hub.load_state_dict_from_url(
+            "https://github.com/RF5/DiffWave-unconditional/releases/download/v0.2/sashimi_sc09_800k_steps.pt",
+            progress=progress, map_location=device
+        )
+
+        model.load_state_dict(checkpoint['model_state_dict'])
+
+    model = DiffWaveWrapper(model, config)
+    model = model.eval().to(device)
+    print(f"[MODEL] SaShiMi DiffWave [800k] loaded with {sum([p.numel() for p in model.parameters()]):,d} parameters")
     return model
