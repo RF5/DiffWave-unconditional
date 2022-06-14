@@ -10,6 +10,7 @@ from torch.utils.data.distributed import DistributedSampler
 from scipy.io.wavfile import read as wavread
 
 from typing import Tuple
+import pandas as pd
 
 import torchaudio
 from torch.utils.data import Dataset
@@ -31,14 +32,9 @@ def fix_length(tensor, length):
     else:
         return tensor
 
-def load_speechcommands_item(filepath: str, path: str):
-    relpath = os.path.relpath(filepath, path)
-    label, filename = os.path.split(relpath)
-    speaker, _ = os.path.splitext(filename)
-
-    speaker_id, utterance_number = speaker.split(HASH_DIVIDER)
-    utterance_number = int(utterance_number)
-
+def load_speechcommands_item(row):
+    filepath = str(row['path'])
+    label = str(row['label'])
     # Load audio
     waveform, sample_rate = torchaudio.load(filepath)
     return (fix_length(waveform, length=16000), sample_rate, label)
@@ -50,18 +46,19 @@ class SPEECHCOMMANDS(Dataset):
     """
 
     def __init__(self, root: str, folder_in_archive: str):
-        self._path = os.path.join(root, folder_in_archive)
+        self.df = pd.read_csv(root)
+        # self._path = os.path.join(root, folder_in_archive)
         # walker = walk_files(self._path, suffix=".wav", prefix=True)
-        walker = sorted(str(p) for p in Path(self._path).glob('*/*.wav'))
-        walker = filter(lambda w: HASH_DIVIDER in w and EXCEPT_FOLDER not in w, walker)
-        self._walker = list(walker)
+        # walker = sorted(str(p) for p in Path(self._path).glob('*/*.wav'))
+        # walker = filter(lambda w: HASH_DIVIDER in w and EXCEPT_FOLDER not in w, walker)
+        # self._walker = list(walker)
 
     def __getitem__(self, n: int) -> Tuple[Tensor, int, str, str, int]:
-        fileid = self._walker[n]
-        return load_speechcommands_item(fileid, self._path)
+        row = self.df.iloc[n]
+        return load_speechcommands_item(row)
 
-    def __len__(self) -> int:
-        return len(self._walker)
+    def __len__(self) -> int: return len(self.df)
+        # return len(self._walker)
 
 def load_Speech_commands(path, batch_size=4, num_gpus=1):
     """

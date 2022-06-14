@@ -20,13 +20,13 @@
         "tensorboard_directory": "logs/tensorboard",
         "ckpt_iter": "max",
         "iters_per_ckpt": 10000,
-        "iters_per_logging": 100,
-        "n_iters": 1000001,
+        "iters_per_logging": 50,
+        "n_iters": 800001,
         "learning_rate": 2e-4,
-        "batch_size_per_gpu": 2
+        "batch_size_per_gpu": 4
     },
     "trainset_config":{
-        "data_path": "/tmp2/SC09/train",
+        "data_path": "splits/sc09-train.csv",
         "segment_length": 16000,
         "sampling_rate": 16000
     },
