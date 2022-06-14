@@ -178,11 +178,6 @@ def diffwave_sc09(pretrained=True, progress=True, device='cuda'):
     print(f"[MODEL] DiffWave loaded with {sum([p.numel() for p in model.parameters()]):,d} parameters")
     return model
 
-
-def sashimi_diffwave_800k_sc09(pretrained=True, progress=True, device='cuda'):
-    """ DiffWave with Sashimi backbone: diffusion model trained on SC09 dataset. """
-    raise NotImplementedError()
-
     
 def sashimi_diffwave_500k_sc09(pretrained=True, progress=True, device='cuda'):
     """ DiffWave with Sashimi backbone: diffusion model trained on SC09 dataset. """
